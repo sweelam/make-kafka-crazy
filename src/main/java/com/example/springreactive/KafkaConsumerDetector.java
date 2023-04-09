@@ -5,26 +5,26 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class KafkaConsumerDetector {
     Logger log = LoggerFactory.getLogger(getClass());
 
-    static AtomicInteger count = new AtomicInteger();
+    static int count = 0;
 
     @KafkaListener(
             topics = "${app.kafka.hack.topic-name}",
-            concurrency = "10",
-            groupId = "detector"
+            concurrency = "30",
+            groupId = "${spring.kafka.consumer.group-id}"
     )
-    public void consume (String record) {
-        count.addAndGet(1);
+    public void consume(String record) {
+        count++;
 
-        if (count.get() % 10000 == 0) {
-
-            log.info("Consumed {} messages", count);
-            log.info("Last message {} " , record);
+        if (count % 10000 == 0) {
+            CompletableFuture.runAsync(() -> log.info("Consumed {} messages", count))
+                    .thenRunAsync(() -> log.info("Last message {} ", record));
         }
     }
 }

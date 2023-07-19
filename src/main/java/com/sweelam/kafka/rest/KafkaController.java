@@ -1,4 +1,4 @@
-package com.example.springreactive;
+package com.sweelam.kafka.rest;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -37,9 +37,9 @@ public class KafkaController {
     public ResponseEntity<String> tryMeHeavily(@PathVariable int limit) {
         var startTime = System.nanoTime();
 
-        push(limit);
+        push(limit, topicName);
 
-        return ResponseEntity.ok("tryMeHeavily took " + ((System.nanoTime() - startTime) / 1000_000_000) + "seconds");
+        return ResponseEntity.ok("tryMeHeavily took " + ((System.nanoTime() - startTime) / 1000_000_000) + " seconds");
     }
 
     /**
@@ -52,20 +52,11 @@ public class KafkaController {
     public Mono<ResponseEntity<String>> tryMeHeavilyAsync(@PathVariable int limit) {
         var startTime = System.nanoTime();
 
-        CompletableFuture.runAsync(() -> push(limit), ex);
+        CompletableFuture.runAsync(() -> pushParallelized(limit), ex);
 
         return Mono.just(
                 ResponseEntity.ok("tryMeHeavily took " + ((System.nanoTime() - startTime) / 1000_000_000) + "seconds")
         );
-    }
-
-    private void push(int limit) {
-        IntStream.range(0, limit)
-                .parallel()
-                .forEach(val -> {
-                    String msg = "Message-" + val + " created!";
-                    kt.send(topicName, msg);
-                });
     }
 
     /**
@@ -79,14 +70,34 @@ public class KafkaController {
     public ResponseEntity<String> letMeBeAQueue(@PathVariable int limit) {
         var startTime = System.nanoTime();
 
-        IntStream.range(0, limit)
-                .forEach(val -> {
-                    String msg = "Order-" + val + " created!";
-                    kt.send(topicName, "order-Q", msg);
-                });
+        push(limit, "order-Q", "Order-%s created!");
 
         return ResponseEntity.ok("tryMeHeavily took " + ((System.nanoTime() - startTime) / 1000_000_000) + "seconds");
     }
 
+    // For simplicity
+    private void pushParallelized(int limit) {
+        IntStream.range(0, limit)
+                .parallel()
+                .forEach(val -> {
+                    String msg = "Message-" + val + " created!";
+                    kt.send(topicName, msg);
+                });
+    }
 
+    private void push(int limit, String topicName) {
+        IntStream.range(0, limit)
+                .forEach(val -> {
+                    String msg = "Message-" + val + " created!";
+                    kt.send(topicName, msg);
+                });
+    }
+
+    private void push(int limit, String topicName, String message) {
+        IntStream.range(0, limit)
+                .forEach(val -> {
+                    String msg = String.format(message, val);
+                    kt.send(topicName, msg);
+                });
+    }
 }

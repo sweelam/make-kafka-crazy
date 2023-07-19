@@ -6,6 +6,8 @@ services:
     container_name: 'zookeeper'
     ports:
       - '2181:2181'
+    networks:
+      - kafka-net
 
   kafka:
     image: 'wurstmeister/kafka:2.13-2.8.1'
@@ -23,6 +25,8 @@ services:
       - /var/lib/kafka/data
     depends_on:
       - zookeeper
+    networks:
+      - kafka-net
 
   init-kafka:
     image: 'wurstmeister/kafka:2.13-2.8.1'
@@ -31,14 +35,17 @@ services:
     entrypoint: [ '/bin/sh', '-c' ]
     command: |
       '
-      # blocks until kafka is reachable
-      bin/kafka-topics.sh --bootstrap-server kafka:9092 --list
-
-      bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic hack-topic  --replication-factor 1 --partitions 3
-
-      echo -e 'Created kafka topics:'
-      bin/kafka-topics.sh --bootstrap-server kafka:9092 --list
-      ' 
+        # blocks until kafka is reachable
+        kafka-topics.sh --bootstrap-server kafka:29092 --list
+  
+        kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic hack-topic  --replication-factor 1 --partitions 3
+        kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic hack-topic-output  --replication-factor 1 --partitions 3
+  
+        echo -e 'Created kafka topics:'
+        kafka-topics.sh --bootstrap-server kafka:29092 --list
+      '
+    networks:
+      - kafka-net
 
   kafka-ui:
     container_name: kafka-ui
@@ -50,3 +57,9 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    networks:
+      - kafka-net
+
+networks:
+  kafka-net:
+    driver: bridge

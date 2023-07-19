@@ -1,4 +1,4 @@
-package com.example.springreactive;
+package com.sweelam.kafka.consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Service
+//@Service
 public class KafkaConsumerDetector {
     Logger log = LoggerFactory.getLogger(getClass());
 
@@ -26,5 +26,7 @@ public class KafkaConsumerDetector {
             CompletableFuture.runAsync(() -> log.info("Consumed {} messages", count))
                     .thenRunAsync(() -> log.info("Last message {} ", record));
         }
+
+
     }
 }

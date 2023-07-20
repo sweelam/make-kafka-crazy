@@ -1,7 +1,8 @@
 package org.example.constant;
 
 public enum KafkaConstantEnum {
-    BOOTSTRAP_SERVER("localhost:9092");
+    BOOTSTRAP_SERVER("localhost:9092"),
+    HACK_TOPIC_NAME("hack-topic");
 
     private String value;
 
